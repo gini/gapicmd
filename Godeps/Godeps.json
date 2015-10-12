@@ -1,0 +1,32 @@
+{
+	"ImportPath": "github.com/gini/gapicmd",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-143-ga65b733",
+			"Rev": "a65b733b303f0055f8d324d805f393cd3e7a7904"
+		},
+		{
+			"ImportPath": "github.com/dkerwin/gini-api-go",
+			"Rev": "93cba0ad715ec5cbf8ae7de521df26427ab17435"
+		},
+		{
+			"ImportPath": "github.com/fatih/color",
+			"Comment": "v0.1",
+			"Rev": "1b35f289c47d5c73c398cea8e006b7bcb6234a96"
+		},
+		{
+			"ImportPath": "github.com/shiena/ansicolor",
+			"Rev": "23296fbcefa1c43b2151a2c65812b71b85cf9f9b"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "8914e5017ca260f2a3a1575b1e6868874050d95e"
+		}
+	]
+}
