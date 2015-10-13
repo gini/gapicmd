@@ -4,8 +4,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-143-ga65b733",
-			"Rev": "a65b733b303f0055f8d324d805f393cd3e7a7904"
+			"Comment": "1.2.0-155-g96f1fed",
+			"Rev": "96f1fedb28e10f2e5ad3fd4b7347101529a7ca56"
 		},
 		{
 			"ImportPath": "github.com/dkerwin/gini-api-go",
