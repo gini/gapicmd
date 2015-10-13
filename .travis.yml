@@ -1,0 +1,23 @@
+language: go
+go:
+  - '1.3'
+  - '1.4'
+  - '1.5'
+
+script:
+  - go get github.com/mitchellh/gox
+  - gox -osarch="darwin/amd64" github.com/gini/gapicmd
+  - gox -osarch="linux/amd64" github.com/gini/gapicmd
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "lppsnSaKP7aH0B9YRZunK1ETNK17dxds7Hv0Rl98sFHjq8zvxa19s8jqVhLEd14o3DQrDStbYGmucL6ST/lczZiRi97+tUrnoR/l9+SXeG3KmkwCX5r5TPCeBiW0nfHjF8DsgMY5r9e91TdM3EouHPWa7HHmt5Z3dquyNxV6brJNrmVnyxh2ALAwrJzaH5AlJg5jKoUOhOhTxRV3kP2QZbfllfodDGk6arxiGmcHFPxl3kEx0ZEa6HxbAWOuGIKfO751EmE+hivCDYS2NboFExRaeoqGCpeOmFkNSmCl1SGIE52kx8eN6xjRL5Cn/4Y6OVNG+0dd3CBKvemrTI6P6ozS/70BItV1HNv0wglys0SmwpCCh1hzfedMBJq5nnBw00/eKw36BntbAZtF+pE63Iq4ayJnK/kpGYvcdYbglqPMOIJLRphqTIH7psT4AU8zBVsBXcH3mv4IHHpF6y4zK7A80g+aT9jjiVMWPdchIKI/TkkP/c+JNrDT225ZGBuOjn8U2IW3TlEEkgRf5dlAkbR35u9vyh11d7Gx/lh3WC45CpOtKYFC8G5X6uU/u1VWLAr+1YrFUMV4esLllfFCeOfPDrDgQKbjH5dK2P2eDOfAK6nFo9OCv3KFP0rCbt7UsZ/a3Akw+kswxE5O0Vt6FaZa0bpQnDDUUv2kCqfdBs4="
+  file:
+    - gapicmd_darwin_amd64
+    - gapicmd_linux_amd64
+  skip_cleanup: true
+  on:
+    repo: gini/gapicmd
+    tags: true
+

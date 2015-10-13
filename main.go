@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/dkerwin/gini-api-go"
@@ -15,10 +14,12 @@ import (
 type curlData struct {
 	Headers map[string]string
 	Body    string
+	URL     string
 }
 
 var (
 	wg       sync.WaitGroup
+	once     sync.Once
 	request  = make(chan []byte)
 	response = make(chan []byte)
 	done     = make(chan bool)
@@ -30,6 +31,11 @@ func main() {
 		for {
 			select {
 			case r := <-request:
+				once.Do(func() {
+					boldBlue := color.New(color.BgBlue).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
+					boldBlue.Println("★★★ HTTP requests ★★★\n")
+				})
+
 				color.Green("client ❯❯❯ gini API\n\n")
 				color.Green("%s\n\n", r)
 			case r := <-response:
@@ -86,6 +92,7 @@ func main() {
 			Name:        "upload",
 			Usage:       "upload document to Gini's API",
 			Description: "Upload the given PDF/image argument and keep polling until the processing is complete. Result is displayed in pretty-printed JSON",
+			ArgsUsage:   "[path to PDF/Image]",
 			Aliases:     []string{"u"},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -107,7 +114,8 @@ func main() {
 		{
 			Name:        "get",
 			Usage:       "get document details from Gini's API", // of an account
-			Description: "Get deocument deatils for documentId",
+			Description: "Get document details for documentId",
+			ArgsUsage:   "[doumentId]",
 			Aliases:     []string{"g"},
 			Action: func(c *cli.Context) {
 				disableColors(c)
@@ -145,22 +153,14 @@ func main() {
 	app.Run(os.Args)
 }
 
-func RenderCurlCommand(headers map[string]string, body string) (string, error) {
-	// if c.GlobalBool("curl") {
-	//  headers := map[string]string{
-	//      "xxxx": "aaa",
-	//      "yyyy": "bbb",
-	//  }
-
-	//  curl, _ := RenderCurlCommand(headers, "")
-	//  fmt.Println(curl)
-	// }
-
-	tpl := ">> curl -v {{range $key, $value := $.Headers}}-H \"{{$key}} :{{$value}}\" {{end}}https://api.gini.net/documents"
+func RenderCurlCommand(c *cli.Context, url string, headers map[string]string, body string) (string, error) {
+	tpl := fmt.Sprintf("❯❯❯ curl -v -u \"%s:%s\" {{range $key, $value := $.Headers}}-H \"{{$key}}: {{$value}}\" {{end}}{{$.Body}} {{$.URL}}", c.GlobalString("client-id"), c.GlobalString("client-secret"))
 	var curl bytes.Buffer
 
 	data := curlData{
 		Headers: headers,
+		Body:    body,
+		URL:     url,
 	}
 
 	t := template.New("bozo")
@@ -200,7 +200,7 @@ func getApiClient(c *cli.Context) *giniapi.APIClient {
 func uploadDocument(c *cli.Context) {
 	filename := c.String("filename")
 	doctype := c.String("doctype")
-	userid := c.GlobalString("user-id")
+	userid := getUserIdentifier(c)
 
 	if len(c.Args()) < 1 {
 		cli.ShowCommandHelp(c, c.Command.FullName())
@@ -246,10 +246,25 @@ func uploadDocument(c *cli.Context) {
 	} else {
 		color.Magenta("%s", pretty)
 	}
+
+	if c.GlobalBool("curl") {
+		h := map[string]string{
+			"Accept":            "application/vnd.gini.v1+json",
+			"X-User-Identifier": userid,
+		}
+		curl, err := RenderCurlCommand(c, fmt.Sprintf("%s/documents", api.Endpoints.API), h, fmt.Sprintf("--data-binary '@%s'", c.Args().First()))
+
+		if err != nil {
+			color.Red("Error: %s", err)
+		}
+		boldYellow := color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold).Add(color.Underline)
+		boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
+		color.Yellow("%s", curl)
+	}
 }
 
 func getDocument(c *cli.Context) {
-	userid := c.GlobalString("user-id")
+	userid := getUserIdentifier(c)
 
 	if len(c.Args()) < 1 {
 		cli.ShowCommandHelp(c, c.Command.FullName())
@@ -257,8 +272,9 @@ func getDocument(c *cli.Context) {
 	}
 
 	api := getApiClient(c)
+	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
 
-	doc, err := api.Get(fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First()), userid)
+	doc, err := api.Get(url, userid)
 
 	if err != nil {
 		color.Red("\nError: %s\n\n", err)
@@ -268,16 +284,33 @@ func getDocument(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.Bold).Add(color.Underline)
+	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
 	boldMagenta.Println("★★★ The results are in ★★★\n")
 
 	pretty, err := prettyJSON(doc)
 
 	if err != nil {
-		color.Red("%s: %s", pretty, err)
+		color.Red("%s: %s\n", pretty, err)
 	} else {
-		color.Magenta("%s", pretty)
+		color.Magenta("%s\n", pretty)
 	}
+
+	if c.GlobalBool("curl") {
+		h := map[string]string{
+			"Accept":            "application/vnd.gini.v1+json",
+			"X-User-Identifier": userid,
+		}
+		curl, err := RenderCurlCommand(c, url, h, "")
+
+		if err != nil {
+			color.Red("Error: %s", err)
+		}
+
+		boldYellow := color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold).Add(color.Underline)
+		boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
+		color.Yellow("%s", curl)
+	}
+
 }
 
 func listDocuments(c *cli.Context) {
@@ -311,18 +344,4 @@ func listDocuments(c *cli.Context) {
 	} else {
 		color.Magenta("%s", pretty)
 	}
-}
-
-func disableColors(c *cli.Context) {
-	if c.GlobalBool("no-color") {
-		color.NoColor = true
-	}
-}
-
-func prettyJSON(obj interface{}) ([]byte, error) {
-	result, err := json.MarshalIndent(obj, "", "  ")
-	if err != nil {
-		return []byte("Failed to prettify JSON object"), err
-	}
-	return result, nil
 }
