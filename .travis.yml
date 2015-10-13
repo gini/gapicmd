@@ -19,6 +19,5 @@ deploy:
     - gapicmd_linux_amd64
   skip_cleanup: true
   on:
-    repo: gini/gapicmd
     tags: true
 
