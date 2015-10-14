@@ -29,11 +29,26 @@ func (cdata *curlData) render(c *cli.Context) error {
 		color.Red("Error: %s", err)
 		return err
 	}
-	boldYellow := color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold).Add(color.Underline)
+	boldYellow := color.New(color.FgYellow).Add(color.Bold).Add(color.Underline)
 	boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
 	color.Yellow("%s", curl.String())
 
 	return nil
+}
+
+func renderResults(obj interface{}) error {
+	boldMagenta := color.New(color.FgMagenta).Add(color.Bold).Add(color.Underline)
+	boldMagenta.Println("★★★ The results are in ★★★\n")
+
+	pretty, err := prettyJSON(obj)
+
+	if err != nil {
+		color.Red("%s: %s\n", pretty, err)
+	} else {
+		color.Magenta("%s\n", pretty)
+	}
+
+	return err
 }
 
 func getUserIdentifier(c *cli.Context) string {

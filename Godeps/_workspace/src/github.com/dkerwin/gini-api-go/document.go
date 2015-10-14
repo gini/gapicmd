@@ -35,18 +35,18 @@ type Links struct {
 
 // Document contains all informations about a single document
 type Document struct {
-	Timing
-	client               *APIClient // client is not exported
-	Owner                string
-	Links                Links  `json:"_links"`
-	CreationDate         int    `json:"creationDate"`
-	ID                   string `json:"id"`
-	Name                 string `json:"name"`
-	Origin               string `json:"origin"`
-	PageCount            int    `json:"pageCount"`
-	Pages                []Page `json:"pages"`
-	Progress             string `json:"progress"`
-	SourceClassification string `json:"sourceClassification"`
+	Timing               `json:"-"`
+	client               *APIClient `json:"-"`
+	Owner                string     `json:"-"`
+	Links                Links      `json:"_links"`
+	CreationDate         int        `json:"creationDate"`
+	ID                   string     `json:"id"`
+	Name                 string     `json:"name"`
+	Origin               string     `json:"origin"`
+	PageCount            int        `json:"pageCount"`
+	Pages                []Page     `json:"pages"`
+	Progress             string     `json:"progress"`
+	SourceClassification string     `json:"sourceClassification"`
 }
 
 // DocumentSet is a list of documents with the total count

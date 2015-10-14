@@ -9,7 +9,7 @@
 		},
 		{
 			"ImportPath": "github.com/dkerwin/gini-api-go",
-			"Rev": "93cba0ad715ec5cbf8ae7de521df26427ab17435"
+			"Rev": "22650cbada26792a315cb5bc2e84d8fcc974877b"
 		},
 		{
 			"ImportPath": "github.com/fatih/color",

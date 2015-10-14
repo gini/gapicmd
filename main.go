@@ -25,7 +25,7 @@ func main() {
 			select {
 			case r := <-request:
 				once.Do(func() {
-					boldBlue := color.New(color.BgBlue).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
+					boldBlue := color.New(color.FgBlue).Add(color.Bold).Add(color.Underline)
 					boldBlue.Println("★★★ HTTP requests ★★★\n")
 				})
 
@@ -250,16 +250,7 @@ func uploadDocument(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON(doc)
-
-	if err != nil {
-		color.Red("%s: %s", pretty, err)
-	} else {
-		color.Magenta("%s", pretty)
-	}
+	renderResults(doc)
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
@@ -297,16 +288,7 @@ func getDocument(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON(doc)
-
-	if err != nil {
-		color.Red("%s: %s\n", pretty, err)
-	} else {
-		color.Magenta("%s\n", pretty)
-	}
+	renderResults(doc)
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
@@ -358,21 +340,12 @@ func getProcessed(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON(doc)
-
-	if err != nil {
-		color.Red("%s: %s\n", pretty, err)
-	} else {
-		color.Magenta("%s\n", pretty)
-	}
+	renderResults(doc)
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
 			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
+				"Accept":            "application/vnd.gini.v1+json,application/octet-stream",
 				"X-User-Identifier": userid,
 			},
 			Body:   "",
@@ -412,16 +385,7 @@ func deleteDocument(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON("empty response")
-
-	if err != nil {
-		color.Red("%s: %s\n", pretty, err)
-	} else {
-		color.Magenta("%s\n", pretty)
-	}
+	renderResults("empty response")
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
@@ -459,16 +423,7 @@ func listDocuments(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON(doc)
-
-	if err != nil {
-		color.Red("%s: %s", pretty, err)
-	} else {
-		color.Magenta("%s", pretty)
-	}
+	renderResults(doc)
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
@@ -512,16 +467,7 @@ func getExtractions(c *cli.Context) {
 	done <- true
 	wg.Wait()
 
-	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
-
-	pretty, err := prettyJSON(ext)
-
-	if err != nil {
-		color.Red("%s: %s\n", pretty, err)
-	} else {
-		color.Magenta("%s\n", pretty)
-	}
+	renderResults(ext)
 
 	if c.GlobalBool("curl") {
 		curl := curlData{
