@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
-	"github.com/dkerwin/gini-api-go"
 	"github.com/fatih/color"
-	"io/ioutil"
 	"os"
 	"sync"
 )
@@ -44,7 +42,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "gapicmd"
 	app.Usage = "interact with Gini's API service from the command line"
-	app.Version = "0.0.1"
+	app.Version = "0.9.20"
 	app.Authors = []cli.Author{
 		cli.Author{Name: "Daniel Kerwin",
 			Email: "d.kerwin@gini.net",
@@ -83,7 +81,7 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name:  "upload",
-			Usage: "upload document to Gini's API",
+			Usage: "upload a new document",
 			Description: `Upload the given PDF/image argument and keep polling until the processing is complete. Result is displayed in pretty-printed JSON.
    See http://developer.gini.net/gini-api/html/documents.html#submitting-files for details.`,
 			ArgsUsage: "[path to PDF/Image]",
@@ -107,7 +105,7 @@ func main() {
 		},
 		{
 			Name:  "get",
-			Usage: "get document details from Gini's API",
+			Usage: "get document details",
 			Description: `Get document details for given documentId.
    See http://developer.gini.net/gini-api/html/documents.html#checking-processing-status-and-getting-document-information for details.`,
 			ArgsUsage: "[doumentId]",
@@ -119,7 +117,7 @@ func main() {
 		},
 		{
 			Name:  "get-processed",
-			Usage: "get processed document details from Gini's API",
+			Usage: "get processed document",
 			Description: `Get processed document (e.g. deskewed) for given documentId.
    See http://developer.gini.net/gini-api/html/documents.html#retrieving-the-processed-document for details.`,
 			ArgsUsage: "[doumentId] [target filename]",
@@ -177,309 +175,34 @@ func main() {
 				getExtractions(c)
 			},
 		},
+		{
+			Name:  "report",
+			Usage: "submit a error report",
+			Description: `Provide error details for a given document.
+   This helps us creating a even better experience for you. See
+   http://developer.gini.net/gini-api/html/documents.html#create-an-error-report-for-a-document for details`,
+			ArgsUsage: "[doumentId]",
+			Aliases:   []string{"r"},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "summary",
+					EnvVar: "SUMMARY",
+					Usage:  "short summary of the error found",
+				},
+				cli.StringFlag{
+					Name:   "description",
+					EnvVar: "DESCRIPTION",
+					Usage:  "more detailed description of the error found",
+				},
+			},
+			Action: func(c *cli.Context) {
+				disableColors(c)
+				reportError(c)
+			},
+		},
 	}
 
 	fmt.Printf("\n")
 
 	app.Run(os.Args)
-}
-
-// getApiClient create a Gini API client from cli context
-func getApiClient(c *cli.Context) *giniapi.APIClient {
-	apiConfig := giniapi.Config{
-		ClientID:       c.GlobalString("client-id"),
-		ClientSecret:   c.GlobalString("client-secret"),
-		Authentication: giniapi.UseBasicAuth,
-		Endpoints: giniapi.Endpoints{
-			API: "https://api.gini.net",
-		},
-	}
-
-	if c.GlobalBool("debug") {
-		apiConfig.HTTPDebug = true
-		apiConfig.RequestDebug = request
-		apiConfig.ResponseDebug = response
-	}
-
-	api, err := giniapi.NewClient(&apiConfig)
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		os.Exit(1)
-	}
-
-	return api
-}
-
-func uploadDocument(c *cli.Context) {
-	filename := c.String("filename")
-	doctype := c.String("doctype")
-	userid := getUserIdentifier(c)
-
-	if len(c.Args()) < 1 {
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	if _, err := os.Stat(c.Args().First()); os.IsNotExist(err) {
-		color.Red("\nError: cannot find %s\n\n", c.Args().First())
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	bodyBuf, err := os.Open(c.Args().First())
-	if err != nil {
-		color.Red("\nError: failed to read %s\n\n", c.Args().First())
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	api := getApiClient(c)
-
-	doc, err := api.Upload(bodyBuf, giniapi.UploadOptions{
-		FileName:       filename,
-		DocType:        doctype,
-		UserIdentifier: userid,
-	})
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults(doc)
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
-				"X-User-Identifier": userid,
-			},
-			Body:   fmt.Sprintf("--data-binary '@%s'", c.Args().First()),
-			URL:    fmt.Sprintf("%s/documents", api.Endpoints.API),
-			Method: "GET",
-		}
-
-		curl.render(c)
-	}
-}
-
-func getDocument(c *cli.Context) {
-	userid := getUserIdentifier(c)
-
-	if len(c.Args()) < 1 {
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	api := getApiClient(c)
-	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
-
-	doc, err := api.Get(url, userid)
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults(doc)
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
-				"X-User-Identifier": userid,
-			},
-			Body:   "",
-			URL:    doc.Links.Document,
-			Method: "GET",
-		}
-
-		curl.render(c)
-	}
-}
-
-func getProcessed(c *cli.Context) {
-	userid := getUserIdentifier(c)
-
-	if len(c.Args()) != 2 {
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	api := getApiClient(c)
-	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
-
-	doc, err := api.Get(url, userid)
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	body, err := doc.GetProcessed()
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	err = ioutil.WriteFile(c.Args()[1], body, 0644)
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults(doc)
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json,application/octet-stream",
-				"X-User-Identifier": userid,
-			},
-			Body:   "",
-			URL:    doc.Links.Processed,
-			Method: "GET",
-		}
-
-		curl.render(c)
-	}
-}
-
-func deleteDocument(c *cli.Context) {
-	userid := getUserIdentifier(c)
-
-	if len(c.Args()) < 1 {
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	api := getApiClient(c)
-	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
-
-	doc, err := api.Get(url, userid)
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	err = doc.Delete()
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults("empty response")
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
-				"X-User-Identifier": userid,
-			},
-			Body:   "",
-			URL:    doc.Links.Document,
-			Method: "DELETE",
-		}
-
-		curl.render(c)
-	}
-}
-
-func listDocuments(c *cli.Context) {
-	limit := c.Int("limit")
-	offset := c.Int("offset")
-	userid := c.GlobalString("user-id")
-
-	api := getApiClient(c)
-
-	doc, err := api.List(giniapi.ListOptions{
-		Limit:          limit,
-		Offset:         offset,
-		UserIdentifier: userid,
-	})
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults(doc)
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
-				"X-User-Identifier": userid,
-			},
-			Body:   "",
-			URL:    fmt.Sprintf("%s/documents?limit=%d&offset=%d", api.Endpoints.API, limit, offset),
-			Method: "GET",
-		}
-
-		curl.render(c)
-	}
-}
-
-func getExtractions(c *cli.Context) {
-	userid := getUserIdentifier(c)
-
-	if len(c.Args()) < 1 {
-		cli.ShowCommandHelp(c, c.Command.FullName())
-		return
-	}
-
-	api := getApiClient(c)
-	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
-
-	doc, err := api.Get(url, userid)
-
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	ext, err := doc.GetExtractions()
-	if err != nil {
-		color.Red("\nError: %s\n\n", err)
-		return
-	}
-
-	done <- true
-	wg.Wait()
-
-	renderResults(ext)
-
-	if c.GlobalBool("curl") {
-		curl := curlData{
-			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
-				"X-User-Identifier": userid,
-			},
-			Body:   "",
-			URL:    doc.Links.Extractions,
-			Method: "GET",
-		}
-
-		curl.render(c)
-	}
 }
