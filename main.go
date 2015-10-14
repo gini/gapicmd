@@ -5,16 +5,10 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/dkerwin/gini-api-go"
 	"github.com/fatih/color"
+	"io/ioutil"
 	"os"
 	"sync"
 )
-
-type curlData struct {
-	Headers map[string]string
-	Body    string
-	URL     string
-	Method  string
-}
 
 var (
 	wg       sync.WaitGroup
@@ -121,6 +115,18 @@ func main() {
 			Action: func(c *cli.Context) {
 				disableColors(c)
 				getDocument(c)
+			},
+		},
+		{
+			Name:  "get-processed",
+			Usage: "get processed document details from Gini's API",
+			Description: `Get processed document (e.g. deskewed) for given documentId.
+   See http://developer.gini.net/gini-api/html/documents.html#retrieving-the-processed-document for details.`,
+			ArgsUsage: "[doumentId] [target filename]",
+			Aliases:   []string{"p"},
+			Action: func(c *cli.Context) {
+				disableColors(c)
+				getProcessed(c)
 			},
 		},
 		{
@@ -256,11 +262,17 @@ func uploadDocument(c *cli.Context) {
 	}
 
 	if c.GlobalBool("curl") {
-		h := map[string]string{
-			"Accept":            "application/vnd.gini.v1+json",
-			"X-User-Identifier": userid,
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   fmt.Sprintf("--data-binary '@%s'", c.Args().First()),
+			URL:    fmt.Sprintf("%s/documents", api.Endpoints.API),
+			Method: "GET",
 		}
-		RenderCurlCommand(c, "POST", fmt.Sprintf("%s/documents", api.Endpoints.API), h, fmt.Sprintf("--data-binary '@%s'", c.Args().First()))
+
+		curl.render(c)
 	}
 }
 
@@ -297,13 +309,79 @@ func getDocument(c *cli.Context) {
 	}
 
 	if c.GlobalBool("curl") {
-		h := map[string]string{
-			"Accept":            "application/vnd.gini.v1+json",
-			"X-User-Identifier": userid,
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   "",
+			URL:    doc.Links.Document,
+			Method: "GET",
 		}
-		RenderCurlCommand(c, "GET", doc.Links.Document, h, "")
+
+		curl.render(c)
+	}
+}
+
+func getProcessed(c *cli.Context) {
+	userid := getUserIdentifier(c)
+
+	if len(c.Args()) != 2 {
+		cli.ShowCommandHelp(c, c.Command.FullName())
+		return
 	}
 
+	api := getApiClient(c)
+	url := fmt.Sprintf("%s/documents/%s", api.Endpoints.API, c.Args().First())
+
+	doc, err := api.Get(url, userid)
+
+	if err != nil {
+		color.Red("\nError: %s\n\n", err)
+		return
+	}
+
+	body, err := doc.GetProcessed()
+
+	if err != nil {
+		color.Red("\nError: %s\n\n", err)
+		return
+	}
+
+	err = ioutil.WriteFile(c.Args()[1], body, 0644)
+
+	if err != nil {
+		color.Red("\nError: %s\n\n", err)
+		return
+	}
+
+	done <- true
+	wg.Wait()
+
+	boldMagenta := color.New(color.BgMagenta).Add(color.FgWhite).Add(color.Bold).Add(color.Underline)
+	boldMagenta.Println("★★★ The results are in ★★★\n")
+
+	pretty, err := prettyJSON(doc)
+
+	if err != nil {
+		color.Red("%s: %s\n", pretty, err)
+	} else {
+		color.Magenta("%s\n", pretty)
+	}
+
+	if c.GlobalBool("curl") {
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   "",
+			URL:    doc.Links.Processed,
+			Method: "GET",
+		}
+
+		curl.render(c)
+	}
 }
 
 func deleteDocument(c *cli.Context) {
@@ -346,11 +424,17 @@ func deleteDocument(c *cli.Context) {
 	}
 
 	if c.GlobalBool("curl") {
-		h := map[string]string{
-			"Accept":            "application/vnd.gini.v1+json",
-			"X-User-Identifier": userid,
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   "",
+			URL:    doc.Links.Document,
+			Method: "DELETE",
 		}
-		RenderCurlCommand(c, "DELETE", doc.Links.Document, h, "")
+
+		curl.render(c)
 	}
 }
 
@@ -387,13 +471,18 @@ func listDocuments(c *cli.Context) {
 	}
 
 	if c.GlobalBool("curl") {
-		h := map[string]string{
-			"Accept":            "application/vnd.gini.v1+json",
-			"X-User-Identifier": userid,
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   "",
+			URL:    fmt.Sprintf("%s/documents?limit=%d&offset=%d", api.Endpoints.API, limit, offset),
+			Method: "GET",
 		}
-		RenderCurlCommand(c, "GET", fmt.Sprintf("%s/documents?limit=%d&offset=%d", api.Endpoints.API, limit, offset), h, "")
-	}
 
+		curl.render(c)
+	}
 }
 
 func getExtractions(c *cli.Context) {
@@ -435,11 +524,16 @@ func getExtractions(c *cli.Context) {
 	}
 
 	if c.GlobalBool("curl") {
-		h := map[string]string{
-			"Accept":            "application/vnd.gini.v1+json",
-			"X-User-Identifier": userid,
+		curl := curlData{
+			Headers: map[string]string{
+				"Accept":            "application/vnd.gini.v1+json",
+				"X-User-Identifier": userid,
+			},
+			Body:   "",
+			URL:    doc.Links.Extractions,
+			Method: "GET",
 		}
-		RenderCurlCommand(c, "GET", doc.Links.Extractions, h, "")
-	}
 
+		curl.render(c)
+	}
 }

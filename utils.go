@@ -10,6 +10,32 @@ import (
 	"text/template"
 )
 
+type curlData struct {
+	Headers map[string]string
+	Body    string
+	URL     string
+	Method  string
+}
+
+func (cdata *curlData) render(c *cli.Context) error {
+	tpl := fmt.Sprintf("❯❯❯ curl -v -X{{$.Method}} -u \"%s:%s\" {{range $key, $value := $.Headers}}-H \"{{$key}}: {{$value}}\" {{end}}{{$.Body}} {{$.URL}}", c.GlobalString("client-id"), c.GlobalString("client-secret"))
+	var curl bytes.Buffer
+
+	t := template.New("bozo")
+	t.Parse(tpl)
+	err := t.Execute(&curl, cdata)
+
+	if err != nil {
+		color.Red("Error: %s", err)
+		return err
+	}
+	boldYellow := color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold).Add(color.Underline)
+	boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
+	color.Yellow("%s", curl.String())
+
+	return nil
+}
+
 func getUserIdentifier(c *cli.Context) string {
 	userid := c.GlobalString("user-id")
 	if userid == "" {
@@ -41,30 +67,4 @@ func prettyJSON(obj interface{}) ([]byte, error) {
 		return []byte("Failed to prettify JSON object"), err
 	}
 	return result, nil
-}
-
-func RenderCurlCommand(c *cli.Context, method, url string, headers map[string]string, body string) error {
-	tpl := fmt.Sprintf("❯❯❯ curl -v -X{{$.Method}} -u \"%s:%s\" {{range $key, $value := $.Headers}}-H \"{{$key}}: {{$value}}\" {{end}}{{$.Body}} {{$.URL}}", c.GlobalString("client-id"), c.GlobalString("client-secret"))
-	var curl bytes.Buffer
-
-	data := curlData{
-		Headers: headers,
-		Body:    body,
-		URL:     url,
-		Method:  method,
-	}
-
-	t := template.New("bozo")
-	t.Parse(tpl)
-	err := t.Execute(&curl, data)
-
-	if err != nil {
-		color.Red("Error: %s", err)
-		return err
-	}
-	boldYellow := color.New(color.BgYellow).Add(color.FgBlack).Add(color.Bold).Add(color.Underline)
-	boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
-	color.Yellow("%s", curl.String())
-
-	return nil
 }
