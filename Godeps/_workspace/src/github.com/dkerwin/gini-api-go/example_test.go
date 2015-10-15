@@ -35,7 +35,7 @@ func ExampleNewClient() {
 	doc, _ := api.Upload(document, giniapi.UploadOptions{FileName: "invoice.pdf", PollTimeout: 10 * time.Second})
 
 	// Get extractions from our uploaded document
-	extractions, _ := doc.GetExtractions()
+	extractions, _ := doc.GetExtractions(false)
 
 	// Print IBAN
 	fmt.Printf("IBAN has been found: %s Woohoo!\n", extractions.GetValue("iban"))
@@ -62,7 +62,7 @@ func ExampleNewClient() {
 	doc, _ = api.Upload(document, giniapi.UploadOptions{FileName: "invoice.pdf", UserIdentifier: "user123", PollTimeout: 10 * time.Second})
 
 	// Get extractions from our uploaded document
-	extractions, _ = doc.GetExtractions()
+	extractions, _ = doc.GetExtractions(false)
 
 	// Print IBAN
 	fmt.Printf("IBAN has been found: %s Woohoo!\n", extractions.GetValue("iban"))

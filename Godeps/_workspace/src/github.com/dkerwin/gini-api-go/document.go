@@ -36,17 +36,17 @@ type Links struct {
 // Document contains all informations about a single document
 type Document struct {
 	Timing               `json:"-"`
-	client               *APIClient `json:"-"`
-	Owner                string     `json:"-"`
-	Links                Links      `json:"_links"`
-	CreationDate         int        `json:"creationDate"`
-	ID                   string     `json:"id"`
-	Name                 string     `json:"name"`
-	Origin               string     `json:"origin"`
-	PageCount            int        `json:"pageCount"`
-	Pages                []Page     `json:"pages"`
-	Progress             string     `json:"progress"`
-	SourceClassification string     `json:"sourceClassification"`
+	client               *APIClient
+	Owner                string `json:"-"`
+	Links                Links  `json:"_links"`
+	CreationDate         int    `json:"creationDate"`
+	ID                   string `json:"id"`
+	Name                 string `json:"name"`
+	Origin               string `json:"origin"`
+	PageCount            int    `json:"pageCount"`
+	Pages                []Page `json:"pages"`
+	Progress             string `json:"progress"`
+	SourceClassification string `json:"sourceClassification"`
 }
 
 // DocumentSet is a list of documents with the total count
@@ -171,10 +171,17 @@ func (d *Document) GetLayout() (*Layout, error) {
 }
 
 // GetExtractions returns a documents extractions in a Extractions struct
-func (d *Document) GetExtractions() (*Extractions, error) {
+func (d *Document) GetExtractions(incubator bool) (*Extractions, error) {
 	var extractions Extractions
+	var headers map[string]string
 
-	resp, err := d.client.makeAPIRequest("GET", d.Links.Extractions, nil, nil, d.Owner)
+	if incubator {
+		headers = map[string]string{
+			"Accept": "application/vnd.gini.incubator+json",
+		}
+	}
+
+	resp, err := d.client.makeAPIRequest("GET", d.Links.Extractions, nil, headers, d.Owner)
 
 	if err != nil {
 		return nil, err

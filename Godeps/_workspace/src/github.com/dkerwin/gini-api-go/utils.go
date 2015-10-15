@@ -17,7 +17,11 @@ func (api *APIClient) makeAPIRequest(verb, url string, body io.Reader, headers m
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %s", err)
 	}
-	req.Header.Add("Accept", fmt.Sprintf("application/vnd.gini.%s+json", api.Config.APIVersion))
+
+	if _, ok := headers["Accept"]; !ok {
+		req.Header.Add("Accept", fmt.Sprintf("application/vnd.gini.%s+json", api.Config.APIVersion))
+	}
+
 	req.Header.Add("User-Agent", fmt.Sprintf("gini-api-go/%s", VERSION))
 
 	if reflect.TypeOf(api.Config.Authentication).Name() == "BasicAuth" {

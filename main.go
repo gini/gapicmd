@@ -116,6 +116,25 @@ func main() {
 			},
 		},
 		{
+			Name:  "get-extractions",
+			Usage: "get document extractions and candidates",
+			Description: `Get document extractions for given documentId.
+   See http://developer.gini.net/gini-api/html/documents.html#retrieving-extractions for details.`,
+			ArgsUsage: "[documentId]",
+			Aliases:   []string{"e"},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:   "incubator",
+					EnvVar: "INCUBATOR",
+					Usage:  "access immature extractions which are still in research or under development",
+				},
+			},
+			Action: func(c *cli.Context) {
+				disableColors(c)
+				getExtractions(c)
+			},
+		},
+		{
 			Name:  "get-processed",
 			Usage: "get processed document",
 			Description: `Get processed document (e.g. deskewed) for given documentId.
@@ -161,18 +180,6 @@ func main() {
 			Action: func(c *cli.Context) {
 				disableColors(c)
 				listDocuments(c)
-			},
-		},
-		{
-			Name:  "extractions",
-			Usage: "get document extractions and candidates",
-			Description: `Get document extractions for given documentId.
-   See http://developer.gini.net/gini-api/html/documents.html#retrieving-extractions for details.`,
-			ArgsUsage: "[documentId]",
-			Aliases:   []string{"e"},
-			Action: func(c *cli.Context) {
-				disableColors(c)
-				getExtractions(c)
 			},
 		},
 		{

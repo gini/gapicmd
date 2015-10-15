@@ -80,7 +80,7 @@ func Test_DocumentGetExtractions(t *testing.T) {
 		},
 	}
 
-	_, err := doc.GetExtractions()
+	_, err := doc.GetExtractions(false)
 	assertEqual(t, err, nil, "")
 }
 

@@ -267,6 +267,7 @@ func listDocuments(c *cli.Context) {
 }
 
 func getExtractions(c *cli.Context) {
+	incubator := c.Bool("incubator")
 	userid := getUserIdentifier(c)
 
 	if len(c.Args()) < 1 {
@@ -284,7 +285,7 @@ func getExtractions(c *cli.Context) {
 		return
 	}
 
-	ext, err := doc.GetExtractions()
+	ext, err := doc.GetExtractions(incubator)
 	if err != nil {
 		color.Red("\nError: %s\n\n", err)
 		return
@@ -296,9 +297,14 @@ func getExtractions(c *cli.Context) {
 	renderResults(ext)
 
 	if c.GlobalBool("curl") {
+		accept := "application/vnd.gini.v1+json"
+		if incubator {
+			accept = "application/vnd.gini.incubator+json"
+		}
+
 		curl := curlData{
 			Headers: map[string]string{
-				"Accept":            "application/vnd.gini.v1+json",
+				"Accept":            accept,
 				"X-User-Identifier": userid,
 			},
 			Body:   "",
