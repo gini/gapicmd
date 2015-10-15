@@ -9,8 +9,12 @@ import (
 )
 
 var (
-	wg       sync.WaitGroup
-	once     sync.Once
+	wg      sync.WaitGroup
+	once    sync.Once
+	Version = "0.0.0-dev"
+
+	defaultClientCredentials string
+
 	request  = make(chan []byte)
 	response = make(chan []byte)
 	done     = make(chan bool)
@@ -42,12 +46,13 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "gapicmd"
 	app.Usage = "interact with Gini's API service from the command line"
-	app.Version = "0.9.20"
+	app.Version = Version
 	app.Authors = []cli.Author{
 		cli.Author{Name: "Daniel Kerwin",
 			Email: "d.kerwin@gini.net",
 		},
 	}
+	app.Copyright = "2015 - Gini GmbH"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "curl, c",
@@ -184,7 +189,7 @@ func main() {
 		},
 		{
 			Name:  "report",
-			Usage: "submit a error report",
+			Usage: "submit an error report",
 			Description: `Provide error details for a given document.
    This helps us creating a even better experience for you. See
    http://developer.gini.net/gini-api/html/documents.html#create-an-error-report-for-a-document for details`,

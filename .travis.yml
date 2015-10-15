@@ -1,21 +1,28 @@
 language: go
 go:
-  - '1.4'
-
+- '1.5'
+env:
+  global:
+  - GAPICMD_VERSION="0.9.${TRAVIS_BUILD_NUMBER}"
+  - secure: aA+TshRI27N3wScdwFsUu3zE6Yu7IJo78Ztodf/GMcDcyTdNmxJ41x5O3MlRhp1NQXXTGCL4yqMO/xOoLy4aBhzVMyR8J5DbpkNElk2WmJW+YuT2pl5DerbCrh6FIeQHhBXM5/1B3PdHGwV6uLh0WamTdi4eCRAaidjz0XqU8xdunc+7R5O1WMznCtYlIa11P3nnM+YVLum6HspkigArQlv/8gRKiUaKmM1SWwboISz5MvxszFngU+YRDDOltISU4V+7uiKC5LXl8HJ17bfuvOlZxaganYD4lVZZqbkU94C5k26rXV9P+5a/pB0UwOm4nK6D7/EIlg+DYMUetnxuxvMg4pi/QO0HloCmJDwh4abDrzbLKGMjgVQAgVCGdahNJnVy9pJc81HtseKVlI2lOEI/Sm6Q1bzJzmkjNc16XN8FuqOqC/h0V5HBj437HBRD6WdkiP+7O6mFS5T9jtXEUhX9f+LaS7FrqhvUeNSaJmLPw/1lFigbE31lub3U1fLf6tyjZ7vq2xyQ83ZR1622dXfpuff8VGq8fEip2k/sBHVKulU8tXmjk21G1ZT09QLcFp/heIyWmXs4agQO89QTj7GxN0lXASjlle9oi49UpgmLq0ErQUkOQECp3SEwBn/SHJZEALzFmExOhb1dR/Ovl5tcoTT1h0pcut5xpbpdLLc=
 script:
-  - go get github.com/mitchellh/gox
-  - gox -build-toolchain -osarch="linux/amd64 darwin/amd64"
-  - gox -osarch="darwin/amd64" github.com/gini/gapicmd
-  - gox -osarch="linux/amd64" github.com/gini/gapicmd
-
+- go get github.com/mitchellh/gox
+- gox -osarch="darwin/amd64" -ldflags "-X main.Version ${GAPICMD_VERSION} -X main.defaultClientCredentials ${GAPICMD_DEFAULT_CREDENTIALS}" github.com/gini/gapicmd
+- gox -osarch="linux/amd64" -ldflags "-X main.Version ${GAPICMD_VERSION} -X main.defaultClientCredentials ${GAPICMD_DEFAULT_CREDENTIALS}" github.com/gini/gapicmd
+before_deploy:
+- git tag ${GAPICMD_VERSION}
+- git push origin --tags
 deploy:
   provider: releases
   api_key:
-    secure: "Lf80ayb44QgkewweRdVXpuFUZm0xvDPZ/HSVwlo2GBPq93RmA/5Iyz16/KUAdrRXO/Xuq6jEE84PYsZoHKHsEdrqZc/YNCpmleYo9K3abYXhD+KZmQzGMy7CTBHasRkZ65X+nSZjGeS8KysWDSszoaj4/Msr6lz1RC9TOwuq1j/w5rBue270kVwIOvJND2I3BuredeEDyAZAHu/Togn6UAED9p/8WPbSSbeYJKmrQJyM6TH50mNl5SIh6VTsVuZ8oRHXvp1p9C/X0OxOmFQjjXMuMDYa2AnugIU3dVWYlKVEjOfwZkII8Tmsk5wvyfi0vonDWEaiywnKlJl5rG6Wdw3ZuYKd9WllTqX3TpuhA+JqT0dDgUhHqfVkfoiNvXOMmsdEQtKZ7iZgVjVrIRtg9lvUmJCzbNkl0OsjWcqMneXPajASP4pO8RxOgDI1MZco5FGcl6SZ7Hq4XVpe6CUSZJsQPmeOMjRdMDETKhPn3wEF8d1ysuTSK/rGvrVmzRbFs57AGnRRgsm2go5FR8/GNihiIdpQFgutUwX+bb8ZqnB6Q1Y59iDzKkYhuPIbEfwqfPydYY3T7uqndDoKu944+i0eKp17cln6Rog+30vf8w9esct5k5Osh22KxB5bDGQI/2qD6sWI6S4JpfCZUbFJAkFvHYUxt/Xs4A/4LPX54eI="
+    secure: Lf80ayb44QgkewweRdVXpuFUZm0xvDPZ/HSVwlo2GBPq93RmA/5Iyz16/KUAdrRXO/Xuq6jEE84PYsZoHKHsEdrqZc/YNCpmleYo9K3abYXhD+KZmQzGMy7CTBHasRkZ65X+nSZjGeS8KysWDSszoaj4/Msr6lz1RC9TOwuq1j/w5rBue270kVwIOvJND2I3BuredeEDyAZAHu/Togn6UAED9p/8WPbSSbeYJKmrQJyM6TH50mNl5SIh6VTsVuZ8oRHXvp1p9C/X0OxOmFQjjXMuMDYa2AnugIU3dVWYlKVEjOfwZkII8Tmsk5wvyfi0vonDWEaiywnKlJl5rG6Wdw3ZuYKd9WllTqX3TpuhA+JqT0dDgUhHqfVkfoiNvXOMmsdEQtKZ7iZgVjVrIRtg9lvUmJCzbNkl0OsjWcqMneXPajASP4pO8RxOgDI1MZco5FGcl6SZ7Hq4XVpe6CUSZJsQPmeOMjRdMDETKhPn3wEF8d1ysuTSK/rGvrVmzRbFs57AGnRRgsm2go5FR8/GNihiIdpQFgutUwX+bb8ZqnB6Q1Y59iDzKkYhuPIbEfwqfPydYY3T7uqndDoKu944+i0eKp17cln6Rog+30vf8w9esct5k5Osh22KxB5bDGQI/2qD6sWI6S4JpfCZUbFJAkFvHYUxt/Xs4A/4LPX54eI=
   file:
-    - gapicmd_darwin_amd64
-    - gapicmd_linux_amd64
+  - gapicmd_darwin_amd64
+  - gapicmd_linux_amd64
   skip_cleanup: true
   on:
-    tags: true
-
+    tags: false
+    branch: master
+branches:
+  except:
+  - "/^[0-9]/"

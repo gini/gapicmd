@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/dkerwin/gini-api-go"
@@ -8,13 +9,44 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 )
 
 // getApiClient create a Gini API client from cli context
 func getApiClient(c *cli.Context) *giniapi.APIClient {
+	clientID := c.GlobalString("client-id")
+	clientSecret := c.GlobalString("client-secret")
+
+	if clientID == "" || clientSecret == "" {
+		color.Yellow("No client credentials given. Fallback to builtin default...")
+		color.Yellow("Keep in mind that your document might be visible to other users.")
+		color.Yellow("Your unique user-id is the only secret to protect your data.\n\n")
+
+		superSecretSecret := []byte("V;4nJvuANmoywKNYk.yewNhqwmAQctc3BvByxeozQVpiK")
+
+		// Decode HEX default credentials
+		credentialsBytes, err := hex.DecodeString(defaultClientCredentials)
+		if err != nil {
+			color.Red("Error: client-id and client-secret missing and fallback decoding (step 1) failed: %s\n\n", err)
+			cli.ShowCommandHelp(c, c.Command.FullName())
+			os.Exit(1)
+		}
+
+		decodedCredentials := strings.Split(string(xorBytes(credentialsBytes, superSecretSecret)), ":")
+
+		if len(decodedCredentials) < 2 {
+			color.Red("Error: client-id and client-secret missing and fallback decoding (step 2) failed: %s\n\n", err)
+			cli.ShowCommandHelp(c, c.Command.FullName())
+			os.Exit(1)
+		}
+
+		clientID = decodedCredentials[0]
+		clientSecret = decodedCredentials[1]
+	}
+
 	apiConfig := giniapi.Config{
-		ClientID:       c.GlobalString("client-id"),
-		ClientSecret:   c.GlobalString("client-secret"),
+		ClientID:       clientID,
+		ClientSecret:   clientSecret,
 		Authentication: giniapi.UseBasicAuth,
 		Endpoints: giniapi.Endpoints{
 			API: "https://api.gini.net",

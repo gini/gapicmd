@@ -21,7 +21,7 @@ func (cdata *curlData) render(c *cli.Context) error {
 	tpl := fmt.Sprintf("❯❯❯ curl -v -X{{$.Method}} -u \"%s:%s\" {{range $key, $value := $.Headers}}-H \"{{$key}}: {{$value}}\" {{end}}{{$.Body}} {{$.URL}}", c.GlobalString("client-id"), c.GlobalString("client-secret"))
 	var curl bytes.Buffer
 
-	t := template.New("bozo")
+	t := template.New("curl")
 	t.Parse(tpl)
 	err := t.Execute(&curl, cdata)
 
@@ -38,7 +38,7 @@ func (cdata *curlData) render(c *cli.Context) error {
 
 func renderResults(obj interface{}) error {
 	boldMagenta := color.New(color.FgMagenta).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ The results are in ★★★\n")
+	boldMagenta.Println("★★★ Results ★★★\n")
 
 	pretty, err := prettyJSON(obj)
 
@@ -82,4 +82,18 @@ func prettyJSON(obj interface{}) ([]byte, error) {
 		return []byte("Failed to prettify JSON object"), err
 	}
 	return result, nil
+}
+
+func xorBytes(b1, b2 []byte) []byte {
+	if len(b1) != len(b2) {
+		panic("length mismatch")
+	}
+
+	rv := make([]byte, len(b1))
+
+	for i := range b1 {
+		rv[i] = b1[i] ^ b2[i]
+	}
+
+	return rv
 }
