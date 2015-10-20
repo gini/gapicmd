@@ -52,7 +52,7 @@ func main() {
 			Email: "d.kerwin@gini.net",
 		},
 	}
-	app.Copyright = "2015 - Gini GmbH"
+	app.Copyright = "2015 - Gini GmbH (https://www.gini.net/developers/)"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "curl, c",

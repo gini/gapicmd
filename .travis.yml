@@ -9,6 +9,7 @@ script:
 - go get github.com/mitchellh/gox
 - gox -osarch="darwin/amd64" -ldflags "-X main.Version ${GAPICMD_VERSION} -X main.defaultClientCredentials ${GAPICMD_DEFAULT_CREDENTIALS}" github.com/gini/gapicmd
 - gox -osarch="linux/amd64" -ldflags "-X main.Version ${GAPICMD_VERSION} -X main.defaultClientCredentials ${GAPICMD_DEFAULT_CREDENTIALS}" github.com/gini/gapicmd
+- gox -osarch="windows/amd64" -ldflags "-X main.Version ${GAPICMD_VERSION} -X main.defaultClientCredentials ${GAPICMD_DEFAULT_CREDENTIALS}" github.com/gini/gapicmd
 before_deploy:
 - git tag ${GAPICMD_VERSION}
 - git push origin --tags
