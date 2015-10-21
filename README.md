@@ -28,14 +28,14 @@ COMMANDS:
    help, h             Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --curl, -c   Show curl command to replay
-   --debug, -d    Show HTTP requests and responses
-   --no-color, -n Disable colorized output
-   --client-id    Gini API client ID [$CLIENT_ID]
-   --client-secret  Gini API client secret [$CLIENT_SECRET]
-   --user-id    Random user identfier string #freestyle [$USER_ID]
-   --help, -h   show help
-   --version, -v  print the version
+   --curl, -c          Show curl command to replay
+   --debug, -d         Show HTTP requests and responses
+   --no-color, -n      Disable colorized output
+   --client-id         Gini API client ID [$CLIENT_ID]
+   --client-secret     Gini API client secret [$CLIENT_SECRET]
+   --user-id           Random user identfier string #freestyle [$USER_ID]
+   --help, -h          show help
+   --version, -v       print the version
 
 COPYRIGHT:
    2015 - Gini GmbH
