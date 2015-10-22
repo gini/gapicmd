@@ -1,6 +1,6 @@
 # gapicmd
 
-[![Build Status](https://magnum.travis-ci.com/gini/gapicmd.svg?token=hks5AUpe81U7Yryvaqjm&branch=master)](https://magnum.travis-ci.com/gini/gapicmd) [![Download latest release](https://img.shields.io/badge/download-latest_release-009edc.svg)](https://github.com/gini/gapicmd/releases/latest)
+[![Build Status](https://travis-ci.org/gini/gapicmd.svg?branch=master)](https://travis-ci.org/gini/gapicmd) [![Download latest release](https://img.shields.io/badge/download-latest_release-009edc.svg)](https://github.com/gini/gapicmd/releases/latest)
 
 Command line client to interact with Gini's API service.
 

@@ -35,7 +35,7 @@ func (cdata *curlData) render(c *cli.Context) error {
 		return err
 	}
 	boldYellow := color.New(color.FgYellow).Add(color.Bold).Add(color.Underline)
-	boldYellow.Println("\n★★★ cURL command to replay request ★★★\n")
+	boldYellow.Printf("\n★★★ cURL command to replay request ★★★\n\n")
 	color.Yellow("%s", curl.String())
 
 	return nil
@@ -43,7 +43,7 @@ func (cdata *curlData) render(c *cli.Context) error {
 
 func renderResults(obj interface{}) error {
 	boldMagenta := color.New(color.FgMagenta).Add(color.Bold).Add(color.Underline)
-	boldMagenta.Println("★★★ Results ★★★\n")
+	boldMagenta.Printf("★★★ Results ★★★\n\n")
 
 	pretty, err := prettyJSON(obj)
 

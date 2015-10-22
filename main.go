@@ -28,7 +28,7 @@ func main() {
 			case r := <-request:
 				once.Do(func() {
 					boldBlue := color.New(color.FgBlue).Add(color.Bold).Add(color.Underline)
-					boldBlue.Println("★★★ HTTP requests ★★★\n")
+					boldBlue.Printf("★★★ HTTP requests ★★★\n\n")
 				})
 
 				color.Green("client ❯❯❯ gini API\n\n")
