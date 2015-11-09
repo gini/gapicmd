@@ -13,13 +13,16 @@ import (
 // getApiClient create a Gini API client from cli context
 func getApiClient(c *cli.Context) *giniapi.APIClient {
 	credentials := getClientCredentials(c)
+	apiEndpoint := c.GlobalString("api")
+	userEndpoint := c.GlobalString("usercenter")
 
 	apiConfig := giniapi.Config{
 		ClientID:       credentials[0],
 		ClientSecret:   credentials[1],
 		Authentication: giniapi.UseBasicAuth,
 		Endpoints: giniapi.Endpoints{
-			API: "https://api.gini.net",
+			API: apiEndpoint,
+			UserCenter: userEndpoint,
 		},
 	}
 

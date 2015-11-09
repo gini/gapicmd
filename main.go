@@ -81,6 +81,18 @@ func main() {
 			EnvVar: "USER_ID",
 			Usage:  "Random user identfier string #freestyle",
 		},
+		cli.StringFlag{
+			Name:   "api",
+			Value: "https://api.gini.net",
+			EnvVar: "API",
+			Usage:  "Gini API endpoint",
+		},
+		cli.StringFlag{
+			Name:   "usercenter",
+			Value: "https://user.gini.net",
+			EnvVar: "USER_CENTER",
+			Usage:  "Gini UserCenter endpoint",
+		},
 	}
 
 	app.Commands = []cli.Command{
