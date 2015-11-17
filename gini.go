@@ -91,7 +91,7 @@ func uploadDocument(c *cli.Context) {
 			},
 			Body:   fmt.Sprintf("--data-binary '@%s'", c.Args().First()),
 			URL:    fmt.Sprintf("%s/documents", api.Endpoints.API),
-			Method: "GET",
+			Method: "POST",
 		}
 
 		curl.render(c)
